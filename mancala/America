@@ -1,0 +1,122 @@
+package mancala;
+
+import java.awt.*;
+import java.awt.geom.*;
+
+
+public class America implements Strategy {
+	private static final int BOARD_WIDTH = 800;
+    private static final int BOARD_HEIGHT = 200;
+    private static final int PIT_SIZE = 60;
+    private static final int MANCALA_WIDTH = 70;
+    private static final int MANCALA_HEIGHT = 160;
+
+    public void drawBoard(Graphics2D g2){
+        g2.setColor(Color.RED); // Black
+        g2.fill(new RoundRectangle2D.Double(90, 20, 
+                620, 160, 20, 20));
+    }
+
+    public void drawMancalas(Graphics2D g2, Model model){
+        g2.setColor(Color.BLUE); // White
+		// Mancala A
+        g2.fill(new RoundRectangle2D.Double(20, 20, 
+                MANCALA_WIDTH, MANCALA_HEIGHT, 30, 30));
+		// Mancala B
+        g2.fill(new RoundRectangle2D.Double(710, 20, 
+                MANCALA_WIDTH, MANCALA_HEIGHT, 30, 30));
+    }
+
+    public void drawPits(Graphics2D g2, Model model){
+    	int startX = 130;
+        int spacing = 95;
+        int boardCenterY = 100; // Center of the board
+        int pitSpacing = 70;
+        int topY = boardCenterY - (pitSpacing/2) - (PIT_SIZE/2);
+        int bottomY = boardCenterY + (pitSpacing/2) - (PIT_SIZE/2);
+		int num;
+		// B1-B6 (top row)
+		for (int i = 0; i < 6; i++) {
+            g2.setColor(Color.WHITE);
+            g2.fill(new Ellipse2D.Double(startX + (i * spacing), topY, 
+                    PIT_SIZE, PIT_SIZE));
+            g2.setColor(Color.BLACK);
+			num = model.getCurrentBoardSpecific(i) - 7;
+			if(num == 1){
+				g2.fill(new Ellipse2D.Double(startX + (i * 100), topY, 25, 25));
+			}
+			if(num == 2){
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), topY, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), topY, 25, 25));
+			}
+			if(num == 3){
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), topY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), topY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX + (i * 100), topY+5, 25, 25));
+			}
+			if(num == 4){
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), topY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), topY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), topY+5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), topY+5, 25, 25));
+
+			}
+		}
+
+		// A1-A6 (bottom row)
+		for (int i = 0; i < 6; i++) {
+            g2.setColor(Color.WHITE);
+            g2.fill(new Ellipse2D.Double(startX + (i * spacing), bottomY, 
+                    PIT_SIZE, PIT_SIZE));
+            g2.setColor(Color.BLACK);
+			num = model.getCurrentBoardSpecific(i);
+			if(num == 1){
+				g2.fill(new Ellipse2D.Double(startX + (i * 100), bottomY, 25, 25));
+			}
+			if(num == 2){
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), bottomY, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), bottomY, 25, 25));
+			}
+			if(num == 3){
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), bottomY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), bottomY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX + (i * 100), bottomY+5, 25, 25));
+			}
+			if(num == 4){
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), bottomY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), bottomY-5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX-5 + (i * 100), bottomY+5, 25, 25));
+				g2.fill(new Ellipse2D.Double(startX+5 + (i * 100), bottomY+5, 25, 25));
+
+			}
+		}
+    }
+
+    public void drawLabels(Graphics2D g2){
+    	g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 16));
+        
+        // Label Mancalas
+        g2.drawString("B", 45, 100);
+        g2.drawString("A", 735, 100);
+        
+        int startX = 150;
+        int spacing = 95;
+        int boardCenterY = 100;
+        int labelSpacing = 70;
+        
+        // Calculate Y positions for labels
+        int topLabelY = boardCenterY - (labelSpacing/2) + 5;
+        int bottomLabelY = boardCenterY + (labelSpacing/2) + 5;
+        
+        // Top row (B6-B1)
+        for (int i = 6; i >= 1; i--) {
+            g2.drawString("B" + i, startX + ((6-i) * spacing), topLabelY);
+        }
+        
+        // Bottom row (A1-A6)
+        for (int i = 1; i <= 6; i++) {
+            g2.drawString("A" + i, startX + ((i-1) * spacing), bottomLabelY);
+        }
+    }
+}

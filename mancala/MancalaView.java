@@ -2,79 +2,102 @@ package mancala;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.*;
+import java.awt.event.ActionListener;
 
 public class MancalaView extends JPanel {
-	private static final int BOARD_WIDTH = 800;
-	private static final int BOARD_HEIGHT = 300;
-	private static final int PIT_DIAMETER = 80;
-	private static final int MANCALA_WIDTH = 80;
-	private static final int MANCALA_HEIGHT = 200;
+    private Model model;
+    private MancalaController controller;
+    private Strategy strat;
+    
+    private static final int BOARD_WIDTH = 800;
+    private static final int BOARD_HEIGHT = 300;
+    
+    private JButton blackAndWhiteStrategy;
+    private JButton americaStrategy;
 
-	public MancalaView() {
-		setPreferredSize(new Dimension(BOARD_WIDTH, BOARD_HEIGHT));
-	}
+    public MancalaView() {
+        setPreferredSize(new Dimension(BOARD_WIDTH, BOARD_HEIGHT));
+        
+        // Strategy buttons
+        blackAndWhiteStrategy = new JButton("Style 1");
+        americaStrategy = new JButton("Style 2");
 
-	@Override
-	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Graphics2D g2 = (Graphics2D) g;
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // Add ActionListeners to handle button clicks for strategy
+        blackAndWhiteStrategy.addActionListener(e -> setStrategy(new BlackAndWhite()));
+        americaStrategy.addActionListener(e -> setStrategy(new America()));
 
-		// Main Board
-		g2.setColor(new Color(139, 69, 19)); // Brown
-		g2.fill(new RoundRectangle2D.Double(40, 50, BOARD_WIDTH - 80, BOARD_HEIGHT - 100, 20, 20));
+        // Layout buttons for strategy
+        setLayout(new FlowLayout());
+        add(blackAndWhiteStrategy);
+        add(americaStrategy);
+    }
 
-		// Draw Mancalas
-		g2.setColor(new Color(205, 133, 63)); // Light Brown
-		// Mancala A
-		g2.fill(new RoundRectangle2D.Double(BOARD_WIDTH - 120, 30, MANCALA_WIDTH, MANCALA_HEIGHT, 20, 20));
-		// Mancala B
-		g2.fill(new RoundRectangle2D.Double(40, 30, MANCALA_WIDTH, MANCALA_HEIGHT, 20, 20));
+    // Set the model and controller for interaction
+    public void setModel(Model model) {
+        this.model = model;
+    }
 
-		// Pits on each side
-		drawPits(g2);
+    public void setController(MancalaController controller) {
+        this.controller = controller;
+    }
 
-		// Draw labels
-		drawLabels(g2);
-	}
+    public void setStrategy(Strategy pickedStrategy) {
+        strat = pickedStrategy;
+        repaint();
+    }
 
-	private void drawPits(Graphics2D g2) {
-		g2.setColor(new Color(205, 133, 63));
-		int startX = 160;
-		int topY = 80;
-		int bottomY = 170;
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        // If strat is null, do nothing (or render a placeholder)
+        if (strat != null) {
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		// B1-B6 (top row)
-		for (int i = 0; i < 6; i++) {
-			g2.fill(new Ellipse2D.Double(startX + (i * 100), topY, PIT_DIAMETER, PIT_DIAMETER));
-		}
+            // Call the strategy methods to draw the board, mancala, pits, and labels
+            strat.drawBoard(g2);
+            strat.drawMancalas(g2, model);
+            strat.drawPits(g2, model);
+            strat.drawLabels(g2);
+        } else {
+            // Optionally, display a message or a placeholder if no strategy is selected yet
+            g.drawString("Please select a style!", BOARD_WIDTH / 3, BOARD_HEIGHT / 2);
+        }
+    }
 
-		// A1-A6 (bottom row)
-		for (int i = 0; i < 6; i++) {
-			g2.fill(new Ellipse2D.Double(startX + (i * 100), bottomY, PIT_DIAMETER, PIT_DIAMETER));
-		}
-	}
+    public void showErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
 
-	private void drawLabels(Graphics2D g2) {
-		g2.setColor(Color.WHITE);
-		g2.setFont(new Font("Arial", Font.BOLD, 14));
-		// Label Mancalas
-		g2.drawString("B", 70, 140);
-		g2.drawString("A", BOARD_WIDTH - 90, 140);
+    // Add pit listeners
+    public void addPitListener(ActionListener listener) {
+        for (int i = 0; i < 14; i++) {
+            JButton pitButton = new JButton("Pit " + i);
+            pitButton.setActionCommand("Pit " + i);  // Set action command to "Pit 0", "Pit 1", etc.
+            pitButton.addActionListener(listener);  // Attach listener to each pit button
+            add(pitButton);  // Add button to the panel
+        }
+    }
 
-		// Label pits
-		int startX = 190;
-		int topY = 120;
-		int bottomY = 210;
+    // Add undo button listener
+    public void addUndoButtonListener(ActionListener listener) {
+        // Create and add the undo button
+        JButton undoButton = new JButton("Undo");
+        undoButton.addActionListener(listener);
+        add(undoButton);  // Add the undo button to the view
+    }
 
-		// Top row (B1-B6)
-		for (int i = 1; i <= 6; i++) {
-			g2.drawString("B" + (7 - i), startX + ((i - 1) * 100), topY);
-		}
-		// Bottom row (A1-A6)
-		for (int i = 1; i <= 6; i++) {
-			g2.drawString("A" + i, startX + ((i - 1) * 100), bottomY);
-		}
-	}
+    public void displayWinner(char winner) {
+        String winnerMessage = "";
+        if (winner == 'A') {
+            winnerMessage = "Player A Wins!";
+        } else if (winner == 'B') {
+            winnerMessage = "Player B Wins!";
+        } else if (winner == 'C') {
+            winnerMessage = "It's a Tie!";
+        }
+
+        JOptionPane.showMessageDialog(this, winnerMessage, "Game Over", JOptionPane.INFORMATION_MESSAGE);
+    }
 }

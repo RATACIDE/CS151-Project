@@ -12,7 +12,7 @@ public class MancalaController {
         this.view = view;
 
         // Event listeners for pits and undo buttons
-        view.addPitListeners(new PitClickListener());
+        view.addPitListener(new PitClickListener());
         view.addUndoButtonListener(new UndoButtonListener());
     }
 
@@ -21,20 +21,10 @@ public class MancalaController {
         @Override
         public void actionPerformed(ActionEvent e) {
             String pitId = e.getActionCommand(); // Example: "A1", "B6"
-
-            boolean validMove = model.makeMove(pitId);
-
-            // Update the move if the move was valid
-            if (validMove) {
-                view.updateBoard(model.getBoardState());
-                view.updateCurrentPlayer(model.getCurrentPlayer());
-
-                // Check if the game is over
-                if (model.isGameOver()) {
-                    view.displayWinner(model.getWinner());
-                }
+            if (model.makeMove(pitId)) {
+                // The model will notify the view when the move is made
             } else {
-                view.showErrorMessage("Invalid move! Try again.");
+                view.showErrorMessage("Invalid move");
             }
         }
     }
@@ -43,14 +33,7 @@ public class MancalaController {
     private class UndoButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            boolean undoSuccessful = model.undoMove();
-
-            if (undoSuccessful) {
-                view.updateBoard(model.getBoardState());
-                view.updateCurrentPlayer(model.getCurrentPlayer());
-            } else {
-                view.showErrorMessage("No more undos available!");
-            }
+            model.undo();
         }
     }
 }

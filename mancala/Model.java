@@ -26,8 +26,12 @@ public class Model{
 
     }
 
-    public int getCurrentBoard(int index){
-        return currentBoard[index];
+    public int[] getCurrentBoard(){
+        return currentBoard;
+    }
+    
+    public int getCurrentBoardSpecific(int i) {
+    	return currentBoard[i];
     }
 
     public void addChangeListener(ChangeListener listener)
@@ -115,14 +119,91 @@ public class Model{
             }
             moveCounter = 0;
             undoCounter++;
+          //notify listeners
+            ChangeEvent event = new ChangeEvent(this);
+            for(ChangeListener listener : listeners){
+                listener.stateChanged(event);
+            }
             return true;
         }
-        //notify listeners
-        ChangeEvent event = new ChangeEvent(this);
-        for(ChangeListener listener : listeners){
-            listener.stateChanged(event);
+
+    }
+    
+    public boolean makeMove(String pitId) {
+        int index = getPitIndexFromId(pitId);  // Convert pitId (e.g., "A1") into the corresponding index
+        if (index == -1) {
+            return false;  // Invalid pitId
         }
 
+        // Validate if the move is allowed (e.g., it's not an empty pit, it's the current player's turn, etc.)
+        if (!distributeStones(index)) {
+            return false;
+        }
+
+        // Save the current board state before making the move (for undo purposes)
+        for (int i = 0; i < currentBoard.length; i++) {
+            previousBoard[i] = currentBoard[i];
+        }
+
+        // Get the number of stones in the selected pit
+        int numStones = currentBoard[index];
+
+        // Empty the selected pit
+        currentBoard[index] = 0;
+
+        // Distribute the stones
+        int currentPit = index;
+        while (numStones > 0) {
+            currentPit++;  // Move to the next pit
+            currentPit %= 14;  // Wrap around the board if we reach the end (index 13 should wrap to 0)
+            
+            // Skip the opponent's Mancala (pit 6 for Player A and pit 13 for Player B)
+            if (currentPlayer == 'A' && currentPit == 13) {
+                currentPit++;  // Skip Player B's Mancala
+                currentPit %= 14;
+            } else if (currentPlayer == 'B' && currentPit == 6) {
+                currentPit++;  // Skip Player A's Mancala
+                currentPit %= 14;
+            }
+
+            currentBoard[currentPit]++;  // Place one stone in the current pit
+            numStones--;  // Decrease the number of stones to distribute
+        }
+
+        // After distributing stones, check if the last pit landed in the player's Mancala
+        if (isYourMancala(currentPit)) {
+            // If the last pit was in the player's Mancala, the player gets another turn
+            // No need to switch players
+        } else {
+            // Otherwise, switch to the other player
+            switchPlayer();
+        }
+
+        // Check if the game is over
+        endGame();
+
+        // Notify listeners to update the view
+        ChangeEvent event = new ChangeEvent(this);
+        for (ChangeListener listener : listeners) {
+            listener.stateChanged(event);  // Notify the listeners (the view will listen to this)
+        }
+
+        return true;  // The move was successfully made
+    }
+    
+    public int getPitIndexFromId(String pitId) {
+    	int num;
+    	if(pitId.contains("A")) {
+    		num = Integer.parseInt(pitId.substring(pitId.length() - 1)) - 1;
+    		return num;
+    	}
+    	else if(pitId.contains("B")) {
+    		num = Integer.parseInt(pitId.substring(pitId.length() - 1)) - 1;
+    		return num + 7;
+    	}
+    	else {
+    		return -1;
+    	}
     }
 
     public boolean isYourPit(int index){
@@ -231,6 +312,21 @@ public class Model{
             return false;
         }
     }
+    
+    public boolean isGameOver() {
+    	for(int i = 0; i < 6; i++) {
+    		if(currentBoard[i] != 0 ) {
+    			return false;
+    		}
+    	}
+    	for(int a = 7; a < 13; a++) {
+    	if(currentBoard[a] != 0 ) {
+			return false;
+			}
+    	}
+    	return true;
+    }
+    
 
     public void endGame(){//to update endState if game has ended
         boolean isEmptyA = true; boolean isEmptyB = true; int addA = 0; int addB = 0;
@@ -263,6 +359,10 @@ public class Model{
             }
         }
 
+    }
+    
+    public char getEndState() {
+    	return endState;
     }
 
 }
